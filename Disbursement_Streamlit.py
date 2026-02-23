@@ -9,7 +9,7 @@ st.title("🏦 Loan Type Mapping Tool")
 st.write("Upload required files and generate mapped disbursement report.")
 
 # =====================================================
-# ✅ FILE UPLOAD SECTION
+# FILE UPLOAD SECTION
 # =====================================================
 col1, col2, col3 = st.columns(3)
 
@@ -22,8 +22,22 @@ with col2:
 with col3:
     main_file = st.file_uploader("Upload Main File", type=["xlsx"])
 
+
 # =====================================================
-# ✅ PROCESS BUTTON
+# HELPER FUNCTION
+# =====================================================
+def prepare_df(df):
+    # Clean column names
+    df.columns = df.columns.astype(str).str.strip()
+
+    # Remove duplicate columns
+    df = df.loc[:, ~df.columns.duplicated()]
+
+    return df
+
+
+# =====================================================
+# PROCESS BUTTON
 # =====================================================
 if st.button("🚀 Run Mapping"):
 
@@ -38,37 +52,39 @@ if st.button("🚀 Run Mapping"):
         ytd_df = pd.read_excel(ytd_file, sheet_name="YTD")
         main_df = pd.read_excel(main_file, sheet_name="Mainsheet")
 
-        # =====================================================
-        # CLEAN COLUMN NAMES
-        # =====================================================
-        def clean_columns(df):
-            df.columns = df.columns.str.strip()
-            return df
-
-        disb_df = clean_columns(disb_df)
-        ytd_df = clean_columns(ytd_df)
-        main_df = clean_columns(main_df)
+        # Clean columns
+        disb_df = prepare_df(disb_df)
+        ytd_df = prepare_df(ytd_df)
+        main_df = prepare_df(main_df)
 
         # =====================================================
-        # DYNAMIC COLUMN RENAME
+        # STANDARDIZE COLUMN NAMES
         # =====================================================
-        def standardize_columns(df):
+        def standardize(df):
             rename_dict = {}
-            for col in df.columns:
-                clean_col = col.replace(" ", "").lower()
 
-                if clean_col in ["actype", "at"]:
+            for col in df.columns:
+                key = col.replace(" ", "").lower()
+
+                if key in ["actype", "at"]:
                     rename_dict[col] = "AcType"
 
-                if clean_col in ["oldacnum", "loantype"]:
+                if key in ["loantype", "oldacnum"]:
                     rename_dict[col] = "Loan Type"
 
-            df.rename(columns=rename_dict, inplace=True)
+                if key in ["branchname", "branch"]:
+                    rename_dict[col] = "BranchName"
+
+            df = df.rename(columns=rename_dict)
+
+            # Remove duplicates after renaming
+            df = df.loc[:, ~df.columns.duplicated()]
+
             return df
 
-        disb_df = standardize_columns(disb_df)
-        ytd_df = standardize_columns(ytd_df)
-        main_df = standardize_columns(main_df)
+        disb_df = standardize(disb_df)
+        ytd_df = standardize(ytd_df)
+        main_df = standardize(main_df)
 
         # =====================================================
         # CLEAN VALUES
@@ -76,20 +92,27 @@ if st.button("🚀 Run Mapping"):
         for df in [disb_df, ytd_df, main_df]:
             for col in ["AcType", "Loan Type", "BranchName"]:
                 if col in df.columns:
-                    df[col] = df[col].astype(str).str.strip()
+                    df[col] = (
+                        df[col]
+                        .astype(str)
+                        .str.strip()
+                        .replace(["", "nan", "None"], np.nan)
+                    )
 
-        disb_df["Loan Type"] = disb_df["Loan Type"].replace(
-            ["", "nan", "None"], pd.NA
-        )
-
-        disb_df = disb_df[disb_df["AcType"] != "4Z"]
+        # Remove AcType 4Z
+        if "AcType" in disb_df.columns:
+            disb_df = disb_df[disb_df["AcType"] != "4Z"]
 
         # =====================================================
         # MAPPING FUNCTION
         # =====================================================
         def get_loan_type(row, ref_df):
-            actype = row["AcType"]
-            branch = row.get("BranchName", None)
+
+            if "AcType" not in ref_df.columns or "Loan Type" not in ref_df.columns:
+                return np.nan
+
+            actype = row.get("AcType")
+            branch = row.get("BranchName")
 
             temp = ref_df[ref_df["AcType"] == actype]
 
@@ -115,16 +138,16 @@ if st.button("🚀 Run Mapping"):
         # =====================================================
         disb_df["Loan Type"] = disb_df.apply(
             lambda row: get_loan_type(row, main_df)
-            if pd.isna(row["Loan Type"])
+            if pd.isna(row.get("Loan Type"))
             else row["Loan Type"],
-            axis=1,
+            axis=1
         )
 
         disb_df["Loan Type"] = disb_df.apply(
             lambda row: get_loan_type(row, ytd_df)
-            if pd.isna(row["Loan Type"])
+            if pd.isna(row.get("Loan Type"))
             else row["Loan Type"],
-            axis=1,
+            axis=1
         )
 
         # =====================================================
@@ -142,7 +165,7 @@ if st.button("🚀 Run Mapping"):
             st.dataframe(unmatched, use_container_width=True)
 
         # =====================================================
-        # DOWNLOAD BUTTON
+        # DOWNLOAD
         # =====================================================
         buffer = io.BytesIO()
 
@@ -155,7 +178,7 @@ if st.button("🚀 Run Mapping"):
             label="📥 Download Result",
             data=buffer,
             file_name="updated_disbursement.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
 
     st.success("✅ Mapping Completed!")
