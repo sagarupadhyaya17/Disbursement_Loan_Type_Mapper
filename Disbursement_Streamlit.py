@@ -48,9 +48,9 @@ if st.button("🚀 Run Mapping"):
     with st.spinner("Processing mapping..."):
 
         # Read files
-        disb_df = pd.read_excel(disbursement_file)
-        ytd_df = pd.read_excel(ytd_file, sheet_name="YTD")
-        main_df = pd.read_excel(main_file, sheet_name="Mainsheet")
+        disb_df = pd.read_excel(disbursement_file, dtype=str)
+        ytd_df = pd.read_excel(ytd_file, sheet_name='YTD', dtype=str)
+        main_df = pd.read_excel(main_file, sheet_name='Mainsheet', dtype=str)
 
         # Clean columns
         disb_df = prepare_df(disb_df)

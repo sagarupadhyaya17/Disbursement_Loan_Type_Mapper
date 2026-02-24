@@ -10,9 +10,9 @@ output_file = r"Output_Files/updated_disbursement.xlsx"
 print("Processing... Please wait ⏳")
 
 # ==== Read Excel Files ====
-disb_df = pd.read_excel(disbursement_file)
-ytd_df = pd.read_excel(ytd_file, sheet_name='YTD')
-main_df = pd.read_excel(main_file, sheet_name='Mainsheet')
+disb_df = pd.read_excel(disbursement_file, dtype=str)
+ytd_df = pd.read_excel(ytd_file, sheet_name='YTD', dtype=str)
+main_df = pd.read_excel(main_file, sheet_name='Mainsheet', dtype=str)
 
 # =====================================================
 # ✅ STEP 1 — CLEAN COLUMN NAMES
