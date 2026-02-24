@@ -19,7 +19,7 @@ main_df = pd.read_excel(main_file, sheet_name='Mainsheet')
 # =====================================================
 def clean_columns(df):
     df.columns = df.columns.str.strip()
-    return df
+    return df.astype(str)
 
 disb_df = clean_columns(disb_df)
 ytd_df = clean_columns(ytd_df)

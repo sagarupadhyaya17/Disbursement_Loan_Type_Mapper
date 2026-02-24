@@ -33,7 +33,7 @@ def prepare_df(df):
     # Remove duplicate columns
     df = df.loc[:, ~df.columns.duplicated()]
 
-    return df
+    return df.astype(str)
 
 
 # =====================================================
