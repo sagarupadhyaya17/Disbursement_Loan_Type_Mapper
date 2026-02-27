@@ -14,13 +14,13 @@ st.write("Upload required files and generate mapped disbursement report.")
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    disbursement_file = st.file_uploader("Upload Disbursement File", type=["xlsx"])
+    disbursement_file = st.file_uploader("Upload Disbursement File", type=["xlsx", "xlsb"])
 
 with col2:
-    ytd_file = st.file_uploader("Upload YTD File", type=["xlsx"])
+    ytd_file = st.file_uploader("Upload YTD File", type=["xlsx", "xlsb"])
 
 with col3:
-    main_file = st.file_uploader("Upload Main File", type=["xlsx"])
+    main_file = st.file_uploader("Upload Main File", type=["xlsx", "xlsb"])
 
 
 # =====================================================
@@ -48,9 +48,20 @@ if st.button("🚀 Run Mapping"):
     with st.spinner("Processing mapping..."):
 
         # Read files
-        disb_df = pd.read_excel(disbursement_file, dtype=str)
-        ytd_df = pd.read_excel(ytd_file, sheet_name='YTD', dtype=str)
-        main_df = pd.read_excel(main_file, sheet_name='Mainsheet', dtype=str)
+        if disbursement_file.name.endswith(".xlsb"):
+            disb_df = pd.read_excel(disbursement_file, dtype=str, engine="pyxlsb")
+        else:
+            disb_df = pd.read_excel(disbursement_file, dtype=str)
+
+        if ytd_file.name.endswith(".xlsb"):
+            ytd_df = pd.read_excel(ytd_file, sheet_name="YTD", dtype=str, engine="pyxlsb")
+        else:
+            ytd_df = pd.read_excel(ytd_file, sheet_name="YTD", dtype=str)
+            
+        if main_file.name.endswith(".xlsb"):
+            main_df = pd.read_excel(main_file, sheet_name="Mainsheet", dtype=str, engine="pyxlsb")
+        else:
+            main_df = pd.read_excel(main_file, sheet_name="Mainsheet", dtype=str)
 
         # Clean columns
         disb_df = prepare_df(disb_df)
