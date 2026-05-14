@@ -167,6 +167,17 @@ if st.button("🚀 Run Mapping"):
         tab1, tab2 = st.tabs(["📊 Mapped Data", "⚠ Unmatched"])
 
         with tab1:
+            st.write(f"Total disbursed: {len(disb_df)}")
+            unique_disb = (
+                disb_df
+                .groupby('Loan Type')
+                .size()
+                .reset_index(name='Count')
+                .sort_values(by='Loan Type', ascending=True)
+            )
+
+            st.dataframe(unique_disb, use_container_width=False)
+            disb_df = disb_df.sort_values(by="Loan Type", ascending = True)
             st.dataframe(disb_df, use_container_width=True)
 
         unmatched = disb_df[disb_df["Loan Type"].isna()]
