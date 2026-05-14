@@ -186,6 +186,9 @@ if st.button("🚀 Run Mapping"):
             st.write(f"Unmatched rows: {len(unmatched)}")
             st.dataframe(unmatched, use_container_width=True)
 
+        # Convert Amount column to numeric
+        disb_df["Amount"] = pd.to_numeric(disb_df["Amount"], errors="coerce")
+
         # =====================================================
         # DOWNLOAD
         # =====================================================
